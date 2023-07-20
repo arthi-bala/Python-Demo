@@ -1,0 +1,57 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Python CI Pipeline - Checking Test Cases
+
+on:
+  # this workflow gets triggered when any changes are pushed to the mentioned branches
+  push:
+  # this workflow gets triggered when any pull request is created to the mentioned branches
+  pull_request:
+  # this workflow gets triggered when manually made to run from action tab
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    # Checkout the repository to the runner
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    # Set up the python environment
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+    
+    # Install the required dependencies
+    - name: Install dependencies
+      run: |
+        # install pytest framework to run test files
+        pip install pytest
+        
+    # If the test files are present, then run the test files and push or merge the changes
+    # Else Skip the test case and push or merge the changes
+    - name: Run Test Cases with pytest
+      run: |
+        file_list=()
+        for entry in */test*.py */*/test*.py
+          do
+            if [[ $entry == *"test"* ]] && [[ $entry != "*/test*.py" ]] && [[ $entry != "*/*/test*.py" ]] ; then
+              file_list+=("$entry") 
+              echo -e "Check for Test Files..................\e[42mtest files found\e[0m"
+              echo -e "Running test cases....................\e[43mstarted\e[0m"
+              pytest
+              break
+            fi
+          done
+        if [ ${#file_list[@]} -eq 0 ]; then 
+          echo -e "Check for Test Files..................\e[41mnot found\e[0m"
+          echo -e "Running test cases....................\e[43mskipping\e[0m"
+        fi
